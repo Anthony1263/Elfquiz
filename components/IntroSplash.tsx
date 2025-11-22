@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Logo } from './Logo';
 
 interface IntroSplashProps {
   onComplete: () => void;
@@ -28,7 +27,7 @@ export const IntroSplash: React.FC<IntroSplashProps> = ({ onComplete }) => {
             transition={{ delay: 0.6, duration: 0.5 }}
         />
 
-        {/* The Falling Elf */}
+        {/* The Falling Text */}
         <motion.div
             initial={{ y: -800, opacity: 1, rotate: -10 }}
             animate={{ y: 0, opacity: 1, rotate: 0 }}
@@ -39,13 +38,13 @@ export const IntroSplash: React.FC<IntroSplashProps> = ({ onComplete }) => {
                 mass: 2,
                 delay: 0.2 
             }}
-            className="relative z-10"
+            className="relative z-10 flex flex-col items-center"
         >
-            <Logo className="w-32 h-32" />
+            <span className="text-9xl font-pixel font-bold text-white">Qz</span>
             
             {/* The Book popping up */}
             <motion.div
-                className="absolute -right-4 bottom-0"
+                className="absolute -right-8 -bottom-2"
                 initial={{ scale: 0, opacity: 0, rotate: -45 }}
                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
                 transition={{ delay: 1.2, type: "spring" }}

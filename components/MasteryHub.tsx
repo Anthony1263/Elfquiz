@@ -23,21 +23,21 @@ export const MasteryHub: React.FC<MasteryHubProps> = ({ xp, masteryCount, level,
   const [light, mid, dark] = getColors();
 
   return (
-    <div className="bg-surface rounded-[40px] p-6 border border-white/5 h-[420px] flex flex-col relative overflow-hidden shadow-lg group">
+    <div className="bg-[#1C1C1E] rounded-[40px] p-6 border border-white/5 h-[420px] flex flex-col relative overflow-hidden shadow-xl group">
         
         {/* Header & Tabs */}
         <div className="flex items-center justify-between mb-4 z-20 relative">
-            <h3 className="text-lg font-bold text-text-primary ml-2">Knowledge Hub</h3>
-            <div className="flex bg-surface-highlight rounded-full p-1 border border-white/5">
+            <h3 className="text-lg font-bold text-white ml-2">Knowledge Hub</h3>
+            <div className="flex bg-[#121212] rounded-full p-1 border border-white/5">
                 <button 
                     onClick={() => setActiveTab('core')}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'core' ? 'bg-white text-black shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'core' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}
                 >
                     Rank
                 </button>
                 <button 
                     onClick={() => setActiveTab('map')}
-                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'map' ? 'bg-white text-black shadow-md' : 'text-text-secondary hover:text-text-primary'}`}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all ${activeTab === 'map' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-white'}`}
                 >
                     Map
                 </button>
@@ -81,12 +81,12 @@ export const MasteryHub: React.FC<MasteryHubProps> = ({ xp, masteryCount, level,
                     </div>
 
                     <div className="text-center z-10">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-3">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#121212] border border-white/10 backdrop-blur-md mb-3 shadow-lg">
                             <span className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: light }}></span>
                             <span className="text-xs font-bold uppercase tracking-widest text-white">{level}</span>
                         </div>
                         <div className="text-4xl font-heading font-bold text-white tracking-tight mb-1">{masteryCount}</div>
-                        <p className="text-xs font-mono text-text-secondary">Total XP: {xp.toLocaleString()}</p>
+                        <p className="text-xs font-mono text-gray-400">Total XP: {xp.toLocaleString()}</p>
                     </div>
                 </motion.div>
             ) : (
@@ -99,8 +99,8 @@ export const MasteryHub: React.FC<MasteryHubProps> = ({ xp, masteryCount, level,
                 >
                     <WeaknessRadar data={radarData} />
                     {radarData.every(d => d.score === 50) && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-surface/60 backdrop-blur-sm z-10">
-                            <p className="text-xs font-bold text-text-secondary px-4 py-2 bg-surface border border-white/10 rounded-full">Complete quizzes to populate map</p>
+                        <div className="absolute inset-0 flex items-center justify-center bg-[#1C1C1E]/80 backdrop-blur-sm z-10">
+                            <p className="text-xs font-bold text-gray-300 px-4 py-2 bg-[#121212] border border-white/10 rounded-full shadow-lg">Complete quizzes to populate map</p>
                         </div>
                     )}
                 </motion.div>

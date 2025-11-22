@@ -1,23 +1,17 @@
-
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Handle potential default export wrapping in some ESM builds to prevent top-level crashes
-const pdfjs = (pdfjsLib as any).default || pdfjsLib;
-
-// Configure the worker src safely
+// Configure the worker src. 
+// We check for window existence to avoid issues during server-side rendering or non-browser contexts,
+// although this app is CSR.
 if (typeof window !== 'undefined' && 'Worker' in window) {
-  if (!pdfjs.GlobalWorkerOptions) {
-      (pdfjs as any).GlobalWorkerOptions = {};
-  }
-  pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
 }
 
 export const extractTextFromPdf = async (file: File): Promise<string> => {
   const arrayBuffer = await file.arrayBuffer();
   
   try {
-    const loadingTask = pdfjs.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     let fullText = '';
 
     // Limit pages to avoid massive memory usage in browser-only env

@@ -2,8 +2,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question, QuestionType, GradingResult } from '../types';
 
-// Initialize the client with strict process.env.API_KEY usage
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Initialize the client
+const getApiKey = () => {
+  try {
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+  } catch (e) {
+    // Ignore error if process is not defined
+  }
+  return 'AIzaSyDK8VQUlRq3ogePFdvqNzRC0GaTXLF6wMc';
+};
+
+const apiKey = getApiKey();
+const ai = new GoogleGenAI({ apiKey });
 
 // Helper to generate a unique ID
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -146,55 +158,74 @@ export const gradeHandwrittenEssay = async (
   const modelId = 'gemini-2.5-flash';
   const imagePart = await fileToGenerativePart(imageFile);
 
-  const prompt = `Grade this handwritten answer for the question: "${questionStem}".
-  Rubric/Context: ${rubric || 'Grade based on clarity, accuracy, and depth.'}
-  
-  Return a JSON object with:
-  - handwriting_transcription (string)
-  - is_legible (boolean)
-  - score_out_of_100 (number)
-  - key_strengths (array of strings)
-  - areas_for_improvement (array of strings)
-  - corrected_version (string)
-  - feedback_summary (string)`;
+  const prompt = `
+    You are an Automated Grading System.
+    Context: The student was asked this theory question: "${questionStem}".
+    ${rubric ? `Grading Rubric/Key Concepts: ${rubric}` : ''}
+    
+    Task:
+    1. Analyze the attached image of handwriting. Transcribe what is written.
+    2. Grade the answer based on relevance, accuracy, and critical thinking.
+    3. Return strictly valid JSON.
+  `;
 
   try {
     const response = await ai.models.generateContent({
       model: modelId,
       contents: {
-        parts: [imagePart, { text: prompt }]
+        parts: [
+          imagePart,
+          { text: prompt }
+        ]
       },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-           type: Type.OBJECT,
-           properties: {
-               handwriting_transcription: { type: Type.STRING },
-               is_legible: { type: Type.BOOLEAN },
-               score_out_of_100: { type: Type.NUMBER },
-               key_strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-               areas_for_improvement: { type: Type.ARRAY, items: { type: Type.STRING } },
-               corrected_version: { type: Type.STRING },
-               feedback_summary: { type: Type.STRING }
-           }
+          type: Type.OBJECT,
+          properties: {
+            handwriting_transcription: { type: Type.STRING },
+            is_legible: { type: Type.BOOLEAN },
+            score_out_of_100: { type: Type.NUMBER },
+            key_strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
+            areas_for_improvement: { type: Type.ARRAY, items: { type: Type.STRING } },
+            corrected_version: { type: Type.STRING },
+            feedback_summary: { type: Type.STRING }
+          }
         }
       }
     });
-    
+
     if (response.text) {
-        return JSON.parse(response.text);
+      return JSON.parse(response.text) as GradingResult;
     }
-    throw new Error("No grading response");
+    throw new Error("No response from Grading AI");
+
   } catch (error) {
-      console.error("Grading failed", error);
-      return {
-          handwriting_transcription: "Error processing image.",
-          is_legible: false,
-          score_out_of_100: 0,
-          key_strengths: [],
-          areas_for_improvement: ["Could not analyze image."],
-          corrected_version: "",
-          feedback_summary: "AI service unavailable."
-      };
+    console.error("Grading Error:", error);
+    // Fallback for demo purposes if API fails
+    return {
+      handwriting_transcription: "Could not transcribe (Offline Mode)",
+      is_legible: false,
+      score_out_of_100: 0,
+      key_strengths: ["N/A"],
+      areas_for_improvement: ["Check internet connection or API Key"],
+      corrected_version: "",
+      feedback_summary: "Grading service unavailable."
+    };
+  }
+};
+
+export const getAiFeedback = async (score: number, total: number, answers: any[]) => {
+  const modelId = 'gemini-2.5-flash';
+  const prompt = `The student scored ${score}/${total}. Analyze their performance based on these answer results: ${JSON.stringify(answers)}. Provide a brief, encouraging, yet constructive summary (max 50 words).`;
+  
+  try {
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: prompt,
+    });
+    return response.text || "Great effort! Keep practicing to improve your mastery.";
+  } catch (e) {
+    return "Offline Mode: Great job completing the quiz! Connect to a valid API key for detailed AI analysis.";
   }
 };

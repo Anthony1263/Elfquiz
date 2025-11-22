@@ -6,7 +6,7 @@
     <title>Quiz Elf</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=VT323&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -16,6 +16,7 @@
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               heading: ['Outfit', 'sans-serif'],
+              pixel: ['"VT323"', 'monospace'],
             },
             colors: {
               background: 'var(--bg-color)',
@@ -81,6 +82,10 @@
       
       .custom-scrollbar::-webkit-scrollbar { width: 4px; }
       .custom-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(150, 150, 150, 0.3); border-radius: 10px; }
+
+      .pixelated {
+        image-rendering: pixelated;
+      }
     </style>
   <script type="importmap">
 {

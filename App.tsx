@@ -14,8 +14,8 @@ import { StreakModal } from './components/StreakModal';
 import { SeasonalBackground } from './components/SeasonalBackground';
 import { generateQuizQuestions } from './services/geminiService';
 import { Question, QuizConfig, QuizResult, UserAnswer, UserProfile } from './types';
-import { Logo } from './components/Logo';
 import { IntroSplash } from './components/IntroSplash';
+import { CourseCard } from './components/CourseCard';
 
 // --- Floating Dock Navigation ---
 interface FloatingDockProps {
@@ -38,7 +38,7 @@ const FloatingDock: React.FC<FloatingDockProps> = ({ isDark, toggleTheme, onHome
                 onClick={onHome}
                 className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-transform active:scale-95 shadow-sm ${activeView === 'dashboard' ? 'bg-text-primary text-background' : 'bg-white/5 text-text-secondary hover:bg-white/10'}`}
              >
-                <Logo className="w-6 h-6" />
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             </button>
             
             <div className="w-px h-8 md:w-8 md:h-px bg-white/10 mx-1 md:mx-0"></div>
@@ -94,55 +94,74 @@ interface DashboardProps {
 
 const Dashboard: React.FC<DashboardProps> = ({ onStartQuiz, history, user, onProfileClick, onStreakClick, stats, radarData, myCourses }) => {
   const date = new Date();
-  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'long' });
+  // Format: "Sat Nov 22" (No comma)
+  const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).replace(',', '');
 
   return (
-    <div className="p-6 lg:p-10 max-w-[1600px] mx-auto w-full animate-fade-in pb-24 md:pb-10 md:pl-28 relative z-10">
+    <div className="p-4 md:p-10 max-w-[1600px] mx-auto w-full animate-fade-in pb-24 md:pb-10 md:pl-28 relative z-10">
       
-      {/* Header: Title Left, Profile Right */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-start mb-8 gap-6 relative">
-         <div>
-            <div className="flex items-center gap-3 mb-2">
-                <Logo className="w-8 h-8 text-primary" />
-                <h1 className="text-2xl md:text-3xl font-heading font-bold text-text-primary tracking-tight">
-                    Quiz Elf
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between mb-8 gap-3 relative z-20">
+         
+         {/* Left: Brand + Date */}
+         <div className="flex items-center gap-3">
+            <div className="flex flex-col leading-none">
+                <h1 className="text-5xl font-pixel text-text-primary tracking-tight">
+                    Qz
                 </h1>
+                <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest mt-1 ml-0.5">{formattedDate}</p>
             </div>
-            <p className="text-text-secondary font-medium text-sm md:text-base">{formattedDate}</p>
          </div>
          
-         {/* Profile Widget Top Right */}
-         <div 
-            onClick={onProfileClick}
-            className="absolute top-0 right-0 bg-surface/80 backdrop-blur-md rounded-full pl-5 pr-2 py-2 border border-white/10 shadow-lg cursor-pointer hover:scale-105 transition-transform flex items-center gap-4 group max-w-[260px]"
-         >
-             <div className="flex flex-col items-end min-w-0">
-                 <span className="text-xs font-bold text-text-primary truncate w-full text-right">{user.username}</span>
-                 <div className="flex items-center gap-2 mt-0.5">
-                     <span className="text-[10px] text-text-secondary truncate max-w-[100px] hidden sm:block text-right">
-                        {user.educationLevel}
-                     </span>
-                    <span className="text-[10px] font-bold text-secondary whitespace-nowrap">{stats.xp} XP</span>
+         {/* Right: Stats (Streak -> Profile Group) */}
+         <div className="flex items-center gap-3 ml-auto">
+             
+             {/* Streak Badge */}
+             <motion.button
+                onClick={onStreakClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-2 px-3 py-2 rounded-[20px] bg-[#FDF2F8] dark:bg-[#2C1A05] border border-pink-200 dark:border-orange-500/30 shadow-sm h-12"
+             >
+                 <motion.div 
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                 >
+                     <span className="text-xl">🔥</span>
+                 </motion.div>
+                 <span className="font-bold text-pink-900 dark:text-orange-100 text-xs whitespace-nowrap">{user.streak} Days</span>
+             </motion.button>
+
+             {/* Profile & XP Group Pill */}
+             <div 
+                onClick={onProfileClick}
+                className="flex items-center gap-3 pl-5 pr-1.5 py-1.5 rounded-[24px] bg-surface border border-white/10 shadow-lg cursor-pointer hover:bg-surface-highlight transition-all h-12 group"
+             >
+                 <div className="flex flex-col items-end justify-center h-full">
+                    <span className="text-xs font-bold text-text-primary leading-none mb-0.5">{user.username}</span>
+                    <span className="text-[10px] font-black text-secondary uppercase tracking-wider leading-none mb-1">{stats.xp.toLocaleString()} XP</span>
+                    
+                    {/* Mini Progress Bar */}
+                    <div className="w-16 h-1 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                        <motion.div 
+                           initial={{ width: 0 }}
+                           animate={{ width: '65%' }} 
+                           className="h-full bg-secondary"
+                        />
+                    </div>
                  </div>
-                 {/* Mini XP Bar */}
-                 <div className="w-20 h-1 bg-surface-highlight rounded-full overflow-hidden mt-1">
-                    <div className="h-full bg-secondary w-3/4"></div>
+
+                 <div className="relative w-9 h-9">
+                     <motion.div 
+                        className="absolute -inset-1 rounded-full bg-gradient-to-tr from-secondary to-primary opacity-0 group-hover:opacity-50 blur-sm transition-opacity duration-300"
+                     />
+                     <img 
+                        src={user.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} 
+                        alt="User" 
+                        className="w-full h-full rounded-full bg-surface-highlight object-cover relative z-10 border border-white/10" 
+                    />
                  </div>
              </div>
-             
-             {/* Animated Avatar */}
-             <motion.div 
-                className="relative w-10 h-10 flex-shrink-0"
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            >
-                 <motion.div 
-                    className="absolute -inset-1 rounded-full bg-gradient-to-tr from-secondary to-primary opacity-70 blur-sm"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-                 />
-                 <img src={user.avatarUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"} alt="User" className="w-full h-full rounded-full bg-surface object-cover relative z-10" />
-             </motion.div>
          </div>
       </div>
 
@@ -152,402 +171,345 @@ const Dashboard: React.FC<DashboardProps> = ({ onStartQuiz, history, user, onPro
         <div className="col-span-1 xl:col-span-8 flex flex-col gap-8">
             
             {/* 1. Weekly Challenge */}
-            <div className="bg-gradient-to-br from-[#240046] via-[#3c096c] to-[#10002b] rounded-[40px] p-8 text-white shadow-xl relative overflow-hidden group">
-                 <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/20 rounded-full blur-[80px] animate-pulse-slow"></div>
-                 <div className="absolute bottom-0 left-0 w-40 h-40 bg-secondary/20 rounded-full blur-[60px]"></div>
-                 <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
-
-                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-                    <div>
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-wider text-yellow-300 mb-2 border border-yellow-500/30">
-                            <span className="animate-pulse">✦</span> Special Event
-                        </div>
-                        <h3 className="text-3xl font-heading font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-200">Grand Scholar's Challenge</h3>
-                        <p className="opacity-80 max-w-md text-sm leading-relaxed">Prove your mastery across 3 domains to unlock the legendary 'Archmage' badge and 500 XP.</p>
-                    </div>
-                    <Button onClick={() => onStartQuiz("Weekly Challenge")} className="bg-white text-[#240046] font-bold px-8 py-4 rounded-xl hover:scale-105 shadow-[0_0_20px_rgba(255,255,255,0.3)] whitespace-nowrap">
-                        Accept Challenge
-                    </Button>
-                 </div>
-            </div>
-
-            {/* 2. Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                 <div onClick={onStreakClick} className="cursor-pointer">
-                    <StatsCard 
-                        title="Daily Streak" 
-                        value={`${stats.streak} Days`} 
-                        icon="🔥" 
-                        colorClass="bg-[#FFEFD5] dark:bg-[#FFDFB3]" 
-                        isPrimary
-                    />
-                 </div>
-                 
-                 {/* Expanded Stats to replace old MasteryCard */}
-                  <StatsCard 
-                    title="Questions" 
-                    value={history.reduce((acc, h) => acc + h.total, 0).toString()} 
-                    icon="📚" 
+            <motion.div 
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                className="bg-[#cbd2d5] rounded-[40px] p-8 text-[#131314] shadow-xl relative overflow-hidden group border border-white/20"
+            >
+                 {/* Animated Blob */}
+                 <motion.div 
+                    className="absolute top-0 right-0 w-64 h-64 bg-white/40 rounded-full blur-3xl -mr-12 -mt-12 pointer-events-none"
+                    animate={{ 
+                        scale: [1, 1.1, 1], 
+                        rotate: [0, 10, 0],
+                        opacity: [0.4, 0.6, 0.4]
+                    }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
                  />
-                  <StatsCard 
+
+                 <div className="relative z-10">
+                    <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3, duration: 0.5 }}
+                        className="inline-block px-3 py-1 rounded-full bg-black/5 font-bold text-[10px] uppercase tracking-widest mb-4"
+                    >
+                        Weekly Goal
+                    </motion.div>
+                    
+                    <motion.h2 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                        className="text-4xl md:text-5xl font-heading font-bold mb-4 leading-tight"
+                    >
+                        Master the<br/>Arcane Arts
+                    </motion.h2>
+                    
+                    <div className="flex items-center gap-4 mb-8">
+                        <div className="flex -space-x-3">
+                            {[1,2,3].map((i, index) => (
+                                <motion.div 
+                                    key={i}
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.5 + (index * 0.1) }}
+                                    className="w-8 h-8 rounded-full bg-white/30 border-2 border-[#E2B6FF] flex items-center justify-center text-[10px] font-bold"
+                                >
+                                    {String.fromCharCode(64+i)}
+                                </motion.div>
+                            ))}
+                        </div>
+                        <motion.span 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.8 }}
+                            transition={{ delay: 0.8 }}
+                            className="text-sm font-medium"
+                        >
+                            +420 Scholars joined
+                        </motion.span>
+                    </div>
+                    
+                    <motion.div whileTap={{ scale: 0.95 }}>
+                        <Button onClick={() => onStartQuiz('Arcane Arts')} className="bg-[#131314] text-white border-none hover:bg-black rounded-xl shadow-lg shadow-black/10 transition-transform hover:-translate-y-0.5">Accept Challenge</Button>
+                    </motion.div>
+                 </div>
+            </motion.div>
+
+            {/* 2. Stats Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                 <StatsCard 
+                    title="Questions" 
+                    value={stats.questionsAnswered} 
+                    icon={<span className="text-2xl">📚</span>}
+                    colorClass="bg-[#E2EFD3] text-[#14532d]"
+                 />
+                 <StatsCard 
                     title="Avg Accuracy" 
                     value={`${stats.accuracy}%`} 
-                    icon="🎯" 
+                    icon={<span className="text-2xl">🎯</span>}
+                    colorClass="bg-[#faf3eb] text-[#451a03]"
                  />
-                  <StatsCard 
+                 {/* Focus Time - Full width on mobile to ensure visibility */}
+                 <StatsCard 
                     title="Focus Time" 
-                    value="4.2h" 
-                    icon="⏳" 
+                    value={`${Math.round(stats.focusMinutes/60)}h`} 
+                    icon={<span className="text-2xl">⏳</span>}
+                    colorClass="bg-[#E2dddc] text-[#1f2937]"
+                    className="col-span-2 md:col-span-1 aspect-auto md:aspect-square"
                  />
             </div>
 
-            {/* 3. Recommended Focus */}
-            <div 
-                onClick={() => onStartQuiz("Kinematics & Motion")}
-                className="w-full p-8 rounded-[40px] bg-[#A8C7FA] relative overflow-hidden cursor-pointer group min-h-[240px] flex flex-col justify-between transition-all hover:scale-[1.01] shadow-xl shadow-blue-500/10"
-            >
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/30 rounded-full blur-[60px] -mr-20 -mt-20 group-hover:scale-110 transition-transform duration-700"></div>
-                
-                <div className="relative z-10 text-[#04080F]">
-                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/40 text-xs font-bold mb-4 backdrop-blur-md">
-                        Recommended Focus
-                    </div>
-                    <h2 className="text-4xl font-heading font-bold mb-2 leading-none">
-                        Kinematics <br/> & Motion
-                    </h2>
-                    <div className="flex items-center gap-2 mt-4 opacity-80 font-medium">
-                        <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                        Accuracy dropped by 12%
-                    </div>
+            {/* 3. My Courses / Modules */}
+            <div>
+                <div className="flex justify-between items-center mb-4 px-2">
+                    <h3 className="text-lg font-bold text-text-primary">Your Modules</h3>
+                    <button className="text-xs font-bold text-primary uppercase tracking-widest hover:text-white transition-colors">View All</button>
                 </div>
-
-                <div className="absolute bottom-8 right-8 h-12 w-12 rounded-full bg-[#04080F] text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
-                    ➜
-                </div>
-             </div>
-
-             {/* 4. Your Courses (Split Grid) */}
-             <div>
-                <h3 className="text-xl font-heading font-bold text-text-primary mb-6">Your Courses</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {myCourses.map((course: any) => (
-                        <div 
-                            key={course.id} 
-                            onClick={() => onStartQuiz(course.topic)} 
-                            className="cursor-pointer group"
-                        >
-                            <div 
-                                className="p-4 md:p-5 rounded-[32px] transition-all relative overflow-hidden h-full min-h-[160px] md:min-h-[180px] flex flex-col justify-end hover:scale-[1.02] hover:shadow-lg"
-                                style={{ backgroundColor: course.theme.bg, color: course.theme.text }}
-                            >
-                                <div className="absolute right-2 top-2 text-4xl opacity-20 rotate-12 group-hover:scale-110 transition-transform">{course.theme.icon}</div>
-                                <div className="relative z-10">
-                                    <h4 className="text-lg md:text-xl font-bold mb-1 leading-tight break-words">{course.topic.split(':')[0]}</h4>
-                                    <p className="font-medium opacity-70 text-xs md:text-sm line-clamp-2">{course.topic.split(':')[1] || 'General Review'}</p>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-             </div>
+                <CourseCard courses={myCourses} onStart={onStartQuiz} />
+            </div>
         </div>
 
-        {/* --- RIGHT COLUMN (Context) --- */}
-        <div className="col-span-1 xl:col-span-4 space-y-6">
+        {/* --- RIGHT COLUMN (Analysis) --- */}
+        <div className="col-span-1 xl:col-span-4 flex flex-col gap-6">
             
-            {/* Unified Mastery Hub */}
+            {/* Mastery Hub */}
             <MasteryHub 
-                xp={stats.xp}
-                masteryCount={stats.mastery}
+                xp={stats.xp} 
+                masteryCount={radarData.filter((d: any) => d.score > 80).length}
                 level={user.masteryLevel}
                 radarData={radarData}
             />
 
+            {/* Recent Activity List */}
+            <div className="bg-surface border border-white/5 rounded-[32px] p-6 flex-1 min-h-[300px]">
+                <h3 className="text-lg font-bold text-text-primary mb-6 px-2">Recent Sessions</h3>
+                <div className="space-y-4">
+                    {history.length === 0 ? (
+                        <div className="text-center text-text-secondary py-10 text-sm">No magic performed yet.</div>
+                    ) : (
+                        history.slice(0, 4).map((session) => (
+                            <div key={session.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-surface-highlight transition-colors group cursor-default">
+                                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold ${session.score/session.total >= 0.7 ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                                    {Math.round((session.score / session.total) * 100)}%
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="text-sm font-bold text-text-primary truncate">{session.topic}</h4>
+                                    <p className="text-xs text-text-secondary">{new Date(session.timestamp).toLocaleDateString()}</p>
+                                </div>
+                                <div className="text-xs font-bold text-text-secondary">
+                                    +{session.xpEarned} XP
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
         </div>
       </div>
     </div>
   );
 };
 
-const App = () => {
+// --- Main App Component ---
+const App: React.FC = () => {
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [showIntro, setShowIntro] = useState(true);
+  const [view, setView] = useState<'dashboard' | 'quiz' | 'report'>('dashboard');
+  const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
+  const [history, setHistory] = useState<QuizResult[]>([]);
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isStreakOpen, setIsStreakOpen] = useState(false);
-  
-  const [sessionState, setSessionState] = useState<'dashboard' | 'quiz' | 'report'>('dashboard');
-  const [activeQuestions, setActiveQuestions] = useState<Question[]>([]);
-  const [activeMode, setActiveMode] = useState<'practice' | 'exam'>('practice');
-  const [currentQuizConfig, setCurrentQuizConfig] = useState<QuizConfig | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [history, setHistory] = useState<QuizResult[]>([]);
-  const [lastResult, setLastResult] = useState<QuizResult | null>(null);
   const [isDark, setIsDark] = useState(true);
+  const [showSplash, setShowSplash] = useState(true);
 
+  // Load user from local storage
   useEffect(() => {
-      const storedUser = localStorage.getItem('examflow_user');
-      if (storedUser) {
-          setUser(JSON.parse(storedUser));
-      }
+    const storedUser = localStorage.getItem('examflow_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
   }, []);
 
-  const toggleTheme = () => {
-      if (isDark) {
-          document.documentElement.classList.remove('dark');
-      } else {
-          document.documentElement.classList.add('dark');
-      }
-      setIsDark(!isDark);
-  };
+  // Theme toggle
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
 
-  const handleLogin = (newUser: UserProfile) => {
-      setUser(newUser);
-      if (newUser.streak > 0) setIsStreakOpen(true);
-  };
-
-  const handleUpdateProfile = (updatedUser: UserProfile) => {
-      setUser(updatedUser);
+  const handleLogin = (loggedInUser: UserProfile) => {
+    setUser(loggedInUser);
   };
 
   const handleLogout = () => {
-      localStorage.removeItem('examflow_user');
-      setUser(null);
-      setIsProfileOpen(false);
+    localStorage.removeItem('examflow_user');
+    setUser(null);
+    setView('dashboard');
   };
 
-  const handleStartQuizRequest = (topic?: string) => {
-      if (topic) {
-          startQuiz({ 
-              topic, 
-              questionCount: 5, 
-              difficulty: 'medium', 
-              mode: 'practice' 
-          });
-      } else {
-          setIsConfigOpen(true);
-      }
-  };
-
-  const startQuiz = async (config: QuizConfig, pdfText?: string) => {
+  const handleStartQuiz = async (config: QuizConfig, pdfText?: string) => {
     setIsConfigOpen(false);
     setIsGenerating(true);
-    setCurrentQuizConfig(config);
-    try {
-      const questions = await generateQuizQuestions(
-          config.topic, 
-          config.questionCount, 
-          config.difficulty, 
-          { level: user?.educationLevel || 'General', field: user?.fieldOfStudy || 'General' },
-          pdfText
-      );
-      setActiveQuestions(questions);
-      setActiveMode(config.mode);
-      setSessionState('quiz');
-    } catch (error) {
-      console.error("Failed to generate quiz", error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const handleQuizComplete = (data: { score: number; total: number; answers: UserAnswer[]; timeTaken: number }) => {
-    const accuracy = Math.round((data.score / data.total) * 100);
-    const xpEarned = (data.score * 10) + (accuracy === 100 ? 50 : 0);
-    const result: QuizResult = {
-        id: Math.random().toString(36).substr(2, 9),
-        topic: currentQuizConfig?.topic || 'General Session',
-        score: data.score,
-        total: data.total,
-        accuracy,
-        xpEarned,
-        timeTaken: data.timeTaken,
-        timestamp: Date.now(),
-        difficulty: currentQuizConfig?.difficulty || 'medium'
+    
+    // Mock or API call
+    const userContext = {
+        level: user?.educationLevel || 'Undergraduate',
+        field: user?.fieldOfStudy || 'General'
     };
-    setHistory(prev => [...prev, result]);
-    setLastResult(result);
-    setSessionState('report');
-    
-    if (user) {
-        const today = new Date();
-        const todayStr = today.toDateString();
-        const lastActiveStr = user.lastActiveDate;
-        
-        let newStreak = user.streak;
-        
-        // Streak Logic: Only increment if active yesterday. Keep same if active today. Reset otherwise.
-        if (lastActiveStr !== todayStr) {
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toDateString();
-            
-            if (lastActiveStr === yesterdayStr) {
-                newStreak++;
-            } else if (!lastActiveStr) {
-                 // First time ever
-                 newStreak = 1;
-            } else {
-                // Streak broken, but active today so starts at 1
-                newStreak = 1;
-            }
-        }
-        
-        // Level Up Logic
-        const newXP = user.xp + xpEarned;
-        let newLevel = user.masteryLevel;
-        if (newXP > 5000) newLevel = 'Scholar';
-        else if (newXP > 1000) newLevel = 'Intermediate';
 
-        const newUser = { 
-            ...user, 
-            streak: newStreak, 
-            xp: newXP, 
-            masteryLevel: newLevel,
-            lastActiveDate: todayStr 
-        };
-        setUser(newUser);
-        localStorage.setItem('examflow_user', JSON.stringify(newUser));
-        
-        // Show streak modal if it's a new day and streak increased
-        if (newStreak > user.streak) {
-             setTimeout(() => setIsStreakOpen(true), 1000);
-        }
+    try {
+        const generatedQuestions = await generateQuizQuestions(config.topic, config.questionCount, config.difficulty, userContext, pdfText);
+        setQuestions(generatedQuestions);
+        setQuizConfig(config);
+        setView('quiz');
+    } catch (error) {
+        console.error("Failed to generate quiz", error);
+        // Handle error (maybe show toast)
+    } finally {
+        setIsGenerating(false);
     }
   };
 
-    // Calculate Stats based on History
-  const stats = useMemo(() => {
-    const totalQuizzes = history.length;
-    const totalCorrect = history.reduce((acc, curr) => acc + curr.score, 0);
-    const totalQuestions = history.reduce((acc, curr) => acc + curr.total, 0);
-    const totalXP = history.reduce((acc, curr) => acc + curr.xpEarned, 0);
-    const avgAccuracy = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
-    const streak = user?.streak || 0;
+  const handleQuizComplete = (results: { score: number; total: number; answers: UserAnswer[]; timeTaken: number }) => {
+    if (!quizConfig) return;
+
+    const xpEarned = results.score * 10 + (results.score === results.total ? 50 : 0);
+    const newResult: QuizResult = {
+      id: Date.now().toString(),
+      topic: quizConfig.topic,
+      score: results.score,
+      total: results.total,
+      accuracy: (results.score / results.total) * 100,
+      xpEarned,
+      timeTaken: results.timeTaken,
+      timestamp: Date.now(),
+      difficulty: quizConfig.difficulty
+    };
+
+    setQuizResult(newResult);
+    setHistory(prev => [newResult, ...prev]);
     
-    return { streak, mastery: totalCorrect, xp: totalXP + (user?.xp || 0), accuracy: avgAccuracy };
-  }, [history, user]);
+    // Update User XP/Stats (local state only for demo)
+    if (user) {
+        const updatedUser = { ...user, xp: user.xp + xpEarned, streak: user.streak }; // Mock streak logic
+        setUser(updatedUser);
+        localStorage.setItem('examflow_user', JSON.stringify(updatedUser));
+    }
 
-  const radarData = useMemo(() => {
-      if (history.length === 0) {
-          return [
-            { subject: 'Bio', score: 50, fullMark: 100 },
-            { subject: 'Chem', score: 50, fullMark: 100 },
-            { subject: 'Phys', score: 50, fullMark: 100 },
-            { subject: 'Hist', score: 50, fullMark: 100 },
-            { subject: 'Math', score: 50, fullMark: 100 },
-          ];
-      }
-      const topicStats: Record<string, { total: number, count: number }> = {};
-      history.forEach(h => {
-          let key = h.topic.split(' ')[0].substring(0, 4);
-          if (h.topic.startsWith('PDF:')) key = 'RAG';
-          if (!topicStats[key]) topicStats[key] = { total: 0, count: 0 };
-          topicStats[key].total += h.accuracy;
-          topicStats[key].count += 1;
-      });
-      return Object.keys(topicStats).map(key => ({
-          subject: key,
-          score: Math.round(topicStats[key].total / topicStats[key].count),
-          fullMark: 100
-      }));
-  }, [history]);
+    setView('report');
+  };
 
-  const myCourses = useMemo(() => {
-      const recentTopics = [...new Set(history.map(h => h.topic))].slice(0, 4);
-      const defaults = ["Biology: Cell Structure", "History: World War II", "Physics: Thermodynamics", "Lit: Shakespeare"];
-      const merged = [...recentTopics, ...defaults].slice(0, 8);
-      
-      return merged.map((topic: string, index) => {
-          const colorIndex = topic.length % 4;
-          const colors = [
-              { bg: '#FFABAB', hover: '#FF9E9E', text: '#3d0000', icon: '🧪' },
-              { bg: '#FFE57F', hover: '#FFD740', text: '#3d3000', icon: '📐' },
-              { bg: '#B9FBC0', hover: '#98F5A4', text: '#003d09', icon: '🧬' },
-              { bg: '#A7C7E7', hover: '#8FB8E0', text: '#001a3d', icon: '🔭' },
-          ];
-          return { id: index, topic, theme: colors[colorIndex] };
-      });
-  }, [history]);
+  // Mock Data for Dashboard
+  const stats = {
+    xp: user?.xp || 0,
+    questionsAnswered: history.reduce((acc, curr) => acc + curr.total, 0) + 420, // + mock base
+    accuracy: history.length > 0 ? Math.round(history.reduce((acc, curr) => acc + curr.accuracy, 0) / history.length) : 85,
+    focusMinutes: history.reduce((acc, curr) => acc + curr.timeTaken, 0) / 60 + 2500 // + mock base
+  };
+
+  const radarData = [
+    { subject: 'Organic Chem', score: 80, fullMark: 100 },
+    { subject: 'Calculus', score: 45, fullMark: 100 },
+    { subject: 'History', score: 90, fullMark: 100 },
+    { subject: 'Physics', score: 60, fullMark: 100 },
+    { subject: 'Literature', score: 75, fullMark: 100 },
+  ];
+  
+  const myCourses = [
+      { id: 1, topic: "Science: Organic Chemistry", theme: { bg: "#dcfce7", hover: "#bbf7d0", text: "#14532d", icon: "🧪" } },
+      { id: 2, topic: "Math: Calculus II", theme: { bg: "#dbeafe", hover: "#bfdbfe", text: "#1e3a8a", icon: "∫" } },
+      { id: 3, topic: "History: World War II", theme: { bg: "#fee2e2", hover: "#fecaca", text: "#7f1d1d", icon: "🌍" } },
+      { id: 4, topic: "CS: Algorithms", theme: { bg: "#f3e8ff", hover: "#e9d5ff", text: "#581c87", icon: "💻" } },
+  ];
+
+  if (showSplash) {
+    return <IntroSplash onComplete={() => setShowSplash(false)} />;
+  }
 
   if (!user) {
-      return <AuthModal onLogin={handleLogin} />;
+    return <AuthModal onLogin={handleLogin} />;
   }
 
   return (
-    <div className="min-h-screen bg-transparent text-text-primary font-sans selection:bg-primary/30 overflow-x-hidden transition-colors duration-300 relative">
-      
-      {/* Background Animation Layer */}
-      <SeasonalBackground season={user.themeSeason} />
+    <div className={`min-h-screen transition-colors duration-300 font-sans text-text-primary selection:bg-primary/30 ${isDark ? 'dark' : ''}`}>
+       <SeasonalBackground season={user.themeSeason} />
+       
+       {/* Floating Nav */}
+       <FloatingDock 
+          isDark={isDark} 
+          toggleTheme={() => setIsDark(!isDark)}
+          onHome={() => setView('dashboard')}
+          onNewSession={() => setIsConfigOpen(true)}
+          onProfileClick={() => setIsProfileOpen(true)}
+          activeView={view}
+          userAvatar={user.avatarUrl}
+       />
 
-      <AnimatePresence>
-        {showIntro && <IntroSplash onComplete={() => setShowIntro(false)} />}
-      </AnimatePresence>
-
-      {isGenerating && <LoadingOverlay isProcessingPdf={false} />}
-
-      {sessionState === 'dashboard' ? (
-          <>
-            <Dashboard 
-                onStartQuiz={handleStartQuizRequest} 
-                history={history} 
+       {/* Main Content Area */}
+       <main className="relative z-10">
+          {view === 'dashboard' && (
+              <Dashboard 
+                onStartQuiz={(topic) => {
+                    // Quick start logic or open modal with topic preset
+                    setIsConfigOpen(true);
+                }}
+                history={history}
                 user={user}
                 onProfileClick={() => setIsProfileOpen(true)}
                 onStreakClick={() => setIsStreakOpen(true)}
                 stats={stats}
                 radarData={radarData}
                 myCourses={myCourses}
-            />
-            <FloatingDock 
-                isDark={isDark} 
-                toggleTheme={toggleTheme} 
-                onHome={() => {}}
-                onNewSession={() => setIsConfigOpen(true)}
-                onProfileClick={() => setIsProfileOpen(true)}
-                activeView="dashboard"
-                userAvatar={user.avatarUrl}
-            />
-          </>
-        ) : sessionState === 'quiz' ? (
-          <div className="h-screen w-full fixed inset-0 z-50 bg-background">
-            <QuizEngine 
-              questions={activeQuestions} 
-              mode={activeMode}
-              onExit={() => setSessionState('dashboard')}
-              onComplete={handleQuizComplete}
-            />
-          </div>
-        ) : (
-            <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
-                {lastResult && (
-                    <ReportCard 
-                        result={lastResult} 
-                        onHome={() => setSessionState('dashboard')} 
-                    />
-                )}
-            </div>
-        )}
+              />
+          )}
 
-      <QuizConfigModal 
+          {view === 'quiz' && (
+              <QuizEngine 
+                 questions={questions}
+                 mode={quizConfig?.mode || 'practice'}
+                 onExit={() => setView('dashboard')}
+                 onComplete={handleQuizComplete}
+              />
+          )}
+       </main>
+
+       {/* Modals & Overlays */}
+       <AnimatePresence>
+           {view === 'report' && quizResult && (
+               <ReportCard result={quizResult} onHome={() => setView('dashboard')} />
+           )}
+       </AnimatePresence>
+       
+       <QuizConfigModal 
           isOpen={isConfigOpen} 
+          onClose={() => setIsConfigOpen(false)}
+          onStart={handleStartQuiz}
           isGenerating={isGenerating}
-          onClose={() => setIsConfigOpen(false)} 
-          onStart={startQuiz} 
-      />
+       />
 
-      <ProfileModal
-        user={user}
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onUpdate={handleUpdateProfile}
-        onLogout={handleLogout}
-      />
+       {isGenerating && <LoadingOverlay />}
 
-      <StreakModal
-        isOpen={isStreakOpen}
-        streakCount={user.streak}
-        onClose={() => setIsStreakOpen(false)}
-      />
+       <ProfileModal 
+          user={user}
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          onUpdate={(u) => setUser(u)}
+          onLogout={handleLogout}
+       />
+
+       <StreakModal 
+          isOpen={isStreakOpen}
+          streakCount={user.streak}
+          onClose={() => setIsStreakOpen(false)}
+       />
     </div>
   );
 };
